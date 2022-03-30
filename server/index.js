@@ -5,7 +5,9 @@ const models = require("./models/Collections.js");
 const nodemailer = require('nodemailer');
 const bodyParser = require('body-parser');
 const md5=require("md5");
-const jsonParser = bodyParser.json()
+const jsonParser = bodyParser.json();
+var cors = require('cors');
+app.use(cors());
 
 
 function generateOTP() {
@@ -57,6 +59,7 @@ app.get('/preregistercheck/:username/:email',function(req,res){
 });
 
 app.get("/generateemailconfirmationcode/:email",function(req,res){
+    console.log("Inside this");
     const email=req.params['email'];
     let a = generateOTP();
     var transporter = nodemailer.createTransport({
@@ -75,6 +78,7 @@ app.get("/generateemailconfirmationcode/:email",function(req,res){
     transporter.sendMail(mailOptions, function(error, info) {
 
         if(error){
+            console.log(error);
             res.send({is_success:false,message:"Something went wrong ... Click Resend Code Again"});
 
         }
