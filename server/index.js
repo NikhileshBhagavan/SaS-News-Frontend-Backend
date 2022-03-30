@@ -3,6 +3,9 @@ const express=require('express');
 const app=express();
 const models = require("./models/Collections.js");
 const nodemailer = require('nodemailer');
+const bodyParser = require('body-parser');
+const md5=require("md5");
+const jsonParser = bodyParser.json()
 
 
 function generateOTP() {
@@ -81,4 +84,114 @@ app.get("/generateemailconfirmationcode/:email",function(req,res){
 
     });
 
+});
+
+app.post("/registeruser",jsonParser,function(req,res){
+    console.log(req.body);
+    let user=new models.User({
+        username:req.body.username,
+        password:md5(req.body.password),
+        email:req.body.email,
+    });
+    user.save(function(err){
+        if(err){
+            res.send({message:"Something went wrong"});
+        }
+        else{
+            res.send({message:"success"});
+        }
+    })
+   
+});
+
+app.post("/find_user",jsonParser,function(req,res){
+    console.log("hi");
+    models.User.findOne({username:req.body.username,password:md5(req.body.password)},function(err,doc){
+        if(err){
+            console.log("Inside error");
+            res.send({message:"error"});
+        }
+        else{
+            if(doc===null){
+                console.log("Inside notfound");
+                res.send({message:"notfound"});
+            }
+            else{
+                console.log("Inside found");
+                res.send({message:"found"});
+            }
+        }
+    })
+});
+
+
+app.get("/sendotp/:email",function(req,res){
+    console.log("hi");
+    const email=req.params['email'];
+    let a = generateOTP();
+    var transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: process.env.EMAIL,
+            pass: process.env.PASSWORD
+        }
+    });
+    var mailOptions = {
+        from: process.env.EMAIL,
+        to: "" + email,
+        subject: 'SaS News 📰 ... OTP TO CHANGE PASSWORD' ,
+        text: "OTP to Change Password is" + " " + a
+    };
+    transporter.sendMail(mailOptions, function(error, info) {
+
+        if(error){
+            res.send({is_success:false,message:"Something went wrong ... Click Resend Code Again"});
+
+        }
+        else{
+            res.send({is_success:true,message:a});
+        }
+
+    });
+   
+});
+app.post("/find_user_for_pwch",jsonParser,function(req,res){
+    console.log("Inside check if user exists");
+    models.User.findOne({username:req.body.username},function(err,doc){
+        if(err){
+            res.send({message:"error",email:null});
+        }
+        else{
+            if(doc===null){
+                  res.send({message:"notfound",email:null});
+               
+            }
+            else{
+                res.send({message:"found",email:doc.email});
+            }
+        }
+
+    });
+
+});
+
+app.post("/changepassword",jsonParser,function(req,res){
+    console.log("Change Password");
+    models.User.findOne({username:req.body.username},function(err,doc){
+        if(err){
+            res.send({message:"error"});
+        }
+        else{
+            console.log(req.body.password);
+            doc.password=md5(req.body.password);
+            doc.save(function(error){
+                if(error){
+                    res.send({message:"error"});
+                }
+                else{
+                    res.send({message:"success"});
+                }
+            });
+        }
+    });
 });
