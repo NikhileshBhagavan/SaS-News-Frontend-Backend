@@ -11,9 +11,6 @@ app.use(cors());
 
 
 function generateOTP() {
-
-    // Declare a digits variable 
-    // which stores all digits
     var digits = '0123456789';
     let OTP = '';
     for (let i = 0; i < 6; i++) {
